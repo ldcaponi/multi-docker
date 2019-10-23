@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t ldcaponi/react-frontend-tests -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true ldcaponi/react-frontend-tests npm test
+
+after_success:
+  - docker build -t ldcaponi/multi-client ./client
+  - docker build -t ldcaponi/multi-nginx ./nginx
+  - docker build -t ldcaponi/multi-server ./server
+  - docker build -t ldcaponi/multi-worker ./worker
+  # Log into docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Push images to dockerhub
+  - docker push ldcaponi/multi-client
+  - docker push ldcaponi/multi-nginx
+  - docker push ldcaponi/multi-server
+  - docker push ldcaponi/multi-worker
